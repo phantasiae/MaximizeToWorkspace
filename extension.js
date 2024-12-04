@@ -126,6 +126,15 @@ const _window_manager_handles = [];
 function enable() {
   // removing delay and using map again
   _window_manager_handles.push(global.window_manager.connect('map', (_, act, change) => {
+    const startup_id = act.meta_window.get_startup_id();
+    if (startup_id) {
+      /* const id = act.meta_window.get_id(); */
+      const manager = act.meta_window.get_display().get_workspace_manager()
+
+      act.meta_window.change_workspace_by_index(0, 1);
+      manager.get_workspace_by_index(0).activate(global.get_current_time());
+    }
+
     if (act.meta_window.get_maximized() === Meta.MaximizeFlags.BOTH) {
       check(act.meta_window, change);
     }
