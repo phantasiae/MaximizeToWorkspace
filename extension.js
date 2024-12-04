@@ -118,6 +118,14 @@ function handleWindowClose(act) {
   }
 };
 
+function isMaxWindowInWorkspace(workspace) {
+  const maximized = workspace.list_windows().filter(window => {
+    return window.get_maximized() === Meta.MaximizeFlags.BOTH;
+  });
+
+  return maximized.length > 0;
+}
+
 // need to understand "handles", these are just object arrays to store the "handles" that connect with signals
 const _window_manager_handles = [];
 
@@ -128,11 +136,21 @@ function enable() {
   _window_manager_handles.push(global.window_manager.connect('map', (_, act, change) => {
     const startup_id = act.meta_window.get_startup_id();
     if (startup_id) {
-      /* const id = act.meta_window.get_id(); */
-      const manager = act.meta_window.get_display().get_workspace_manager()
+      const workspace_manager = act.meta_window.get_display().get_workspace_manager()
+      let first_workspace = workspace_manager.get_workspace_by_index(0);
 
-      act.meta_window.change_workspace_by_index(0, 1);
-      manager.get_workspace_by_index(0).activate(global.get_current_time());
+      const is_first_workspace_maximized_exist = isMaxWindowInWorkspace(first_workspace);
+      let new_workspace_id = 1;
+      if (is_first_workspace_maximized_exist) {
+        first_workspace = workspace_manager.append_new_workspace(true, global.get_current_time());
+        new_workspace_id = first_workspace.index();
+      }
+
+      act.meta_window.change_workspace_by_index(new_workspace_id, true);
+      workspace_manager.reorder_workspace(first_workspace, 0);
+
+
+      first_workspace.activate(global.get_current_time());
     }
 
     if (act.meta_window.get_maximized() === Meta.MaximizeFlags.BOTH) {
